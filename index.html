@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A calm, focused way to read, listen to, and explore the Holy Qur'an." />
+  <title>Ayah — Read the Holy Qur'an</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="design-overhaul.css" />
+  <link rel="stylesheet" href="dark-mode-refinement.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="brand-mark">۞</span><div><strong>AYAH</strong><small>القرآن الكريم</small></div></div>
+      <label class="search-box"><span>⌕</span><input id="surahSearch" type="search" placeholder="Find a surah…" aria-label="Find a surah"></label>
+      <div class="side-heading"><span id="sideHeadingLabel">114 SURAHS</span><button id="closeSidebar" aria-label="Close navigation">×</button></div>
+      <nav id="surahList" class="surah-list" aria-label="Surah navigation"><div class="loading-small">Loading chapters…</div></nav>
+      <div class="sidebar-foot">Text and audio provided by AlQuran Cloud</div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <button class="quran-emblem" aria-label="Ayah home" onclick="location.hash='1'"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 3l5.1 7.8 9.3-.4-.4 9.3 7.8 5.1-7.8 5.1.4 9.3-9.3-.4L24 45l-5.1-7.8-9.3.4.4-9.3-7.8-5.1 7.8-5.1-.4-9.3 9.3.4z"/><circle cx="24" cy="24" r="10"/><text x="24" y="28">ق</text></svg></button>
+        <button id="menuBtn" class="icon-btn menu-btn" aria-label="Open navigation">☰</button>
+        <div class="top-title"><span id="topSurah">Al-Faatiha</span><small id="topMeta">THE OPENING · 7 VERSES</small></div>
+        <div class="top-actions">
+          <button id="hadithModeBtn" class="study-btn secondary-study-btn">Hadith</button>
+          <button id="studyBtn" class="study-btn">Study</button>
+          <button id="globalSearchBtn" class="icon-btn" aria-label="Search the Qur'an">⌕</button>
+          <button id="themeBtn" class="icon-btn" aria-label="Toggle theme">◐</button>
+          <button id="settingsBtn" class="icon-btn" aria-label="Reading settings">Aa</button>
+        </div>
+      </header>
+
+      <section class="reader" id="readerView">
+        <div class="reader-head">
+          <div class="surah-number" id="surahNumber">01</div>
+          <p class="eyebrow" id="revelation">MECCAN SURAH</p>
+          <h1 id="surahArabic">سُورَةُ ٱلْفَاتِحَةِ</h1>
+          <h2 id="surahEnglish">Al-Faatiha <span>· The Opening</span></h2>
+          <p id="surahSummary">7 verses</p>
+          <div class="chapter-controls">
+            <button class="primary-btn" id="playAll">▶ <span>Play surah</span></button>
+            <button class="ghost-btn" id="bookmarkChapter">♡ <span>Bookmark</span></button>
+          </div>
+        </div>
+
+        <div class="bismillah" id="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+        <div id="verses" class="verses"><div class="loading-card">Preparing the page…</div></div>
+        <div class="chapter-nav">
+          <button id="prevSurah">← <span>Previous surah</span></button>
+          <button id="nextSurah"><span>Next surah</span> →</button>
+        </div>
+      </section>
+
+      <section class="study-view" id="studyView" hidden>
+        <div class="study-hero">
+          <button id="backToQuran" class="back-link">← Back to Qur’an</button>
+          <p class="eyebrow">LEARN · REFLECT · PRACTICE</p>
+          <h1>Study the Qur’an</h1>
+          <p>Authentic narrations, practical Prophetic guidance, and introductions to classical Qur’anic commentary.</p>
+        </div>
+        <div class="study-tabs" role="tablist">
+          <button class="study-tab active" data-tab="hadith" role="tab">Hadith</button>
+          <button class="study-tab" data-tab="sunnah" role="tab">Sunnah guidance</button>
+          <button class="study-tab" data-tab="scholars" role="tab">Scholars & tafsir</button>
+        </div>
+
+        <div class="study-panel active" id="panel-hadith">
+          <div class="panel-intro"><div><span class="panel-icon">❝</span><h2>Hadith on the Qur’an</h2><p>Selected authentic narrations about learning, reciting, and living by Allah’s Book.</p></div><label class="study-search">⌕ <input data-filter="hadithGrid" placeholder="Filter hadith…"></label></div>
+          <div class="study-grid" id="hadithGrid">
+            <article class="study-card"><span class="card-tag">LEARNING</span><blockquote>“The best among you are those who learn the Qur’an and teach it.”</blockquote><p>The Prophet ﷺ placed learning and sharing the Qur’an among the highest forms of goodness.</p><a href="https://sunnah.com/bukhari:5027" target="_blank" rel="noreferrer">Sahih al-Bukhari 5027 ↗</a></article>
+            <article class="study-card"><span class="card-tag">RECITATION</span><blockquote>“Recite the Qur’an, for on the Day of Resurrection it will come as an intercessor for those who recite it.”</blockquote><p>A call to make recitation a steady companion, not only an occasional practice.</p><a href="https://sunnah.com/muslim:804a" target="_blank" rel="noreferrer">Sahih Muslim 804a ↗</a></article>
+            <article class="study-card"><span class="card-tag">PERSEVERANCE</span><blockquote>“The one who recites the Qur’an and finds it difficult… will have two rewards.”</blockquote><p>Difficulty is not failure. Sincere effort in recitation carries special reward.</p><a href="https://sunnah.com/riyadussalihin:994" target="_blank" rel="noreferrer">Riyad as-Salihin 994 ↗</a></article>
+            <article class="study-card"><span class="card-tag">BEAUTIFUL RECITATION</span><blockquote>Allah listens to a Prophet reciting the Qur’an in a beautiful, audible voice.</blockquote><p>This narration encourages careful and beautiful recitation while preserving sincerity.</p><a href="https://sunnah.com/bukhari:5024" target="_blank" rel="noreferrer">Sahih al-Bukhari 5024 ↗</a></article>
+          </div>
+          <div class="library-head">
+            <div><span class="card-tag">COMPLETE COLLECTIONS</span><h2>Hadith Library</h2><p>Browse and search full English editions. Grades are shown exactly as supplied by the dataset.</p></div>
+            <div class="library-controls"><select id="hadithCollection"><option value="eng-bukhari">Sahih al-Bukhari</option><option value="eng-muslim">Sahih Muslim</option><option value="eng-abudawud">Sunan Abi Dawud</option><option value="eng-tirmidhi">Jami‘ at-Tirmidhi</option><option value="eng-nasai">Sunan an-Nasa’i</option><option value="eng-ibnmajah">Sunan Ibn Majah</option><option value="eng-malik">Muwatta Malik</option></select><button id="loadHadiths">Open collection</button></div>
+          </div>
+          <div id="hadithLibrary" class="hadith-library"><p>Select a collection to load its complete searchable edition.</p></div>
+          <div id="hadithPager" class="hadith-pager" hidden><button id="hadithPrev">← Previous</button><span id="hadithPage"></span><button id="hadithNext">Next →</button></div>
+        </div>
+
+        <div class="study-panel" id="panel-sunnah">
+          <div class="panel-intro"><div><span class="panel-icon">✦</span><h2>Reading with the Sunnah</h2><p>Simple practices drawn from Prophetic guidance for approaching the Qur’an with care.</p></div></div>
+          <div class="practice-list">
+            <article><span>01</span><div><h3>Recite regularly</h3><p>Build a consistent relationship with the Qur’an, even if the daily portion is small. Steadiness makes reflection part of ordinary life.</p></div></article>
+            <article><span>02</span><div><h3>Recite carefully and beautifully</h3><p>Give every letter its due and avoid rushing. If recitation is difficult, continue patiently—the effort itself is rewarded.</p></div></article>
+            <article><span>03</span><div><h3>Learn, then teach responsibly</h3><p>Study with reliable teachers and pass on only what you understand accurately. Teaching begins with humility.</p></div></article>
+            <article><span>04</span><div><h3>Let recitation shape action</h3><p>The aim is not sound alone: pause, reflect, and ask how the verses should affect worship, character, and dealings with others.</p></div></article>
+          </div>
+          <div class="note-box"><strong>A note on guidance</strong><p>This section offers general educational summaries, not religious rulings. For questions of law, creed, or personal circumstances, consult a qualified scholar you trust.</p></div>
+        </div>
+
+        <div class="study-panel" id="panel-scholars">
+          <div class="panel-intro"><div><span class="panel-icon">⌘</span><h2>How scholars explain the Qur’an</h2><p>A doorway into tafsir—the disciplined study of Qur’anic meaning, language, context, and Prophetic explanation.</p></div></div>
+          <div class="scholar-grid">
+            <article class="scholar-card"><div class="scholar-monogram">Ṭ</div><div><span>CLASSICAL TAFSIR</span><h3>Al-Tabari</h3><p>Known for preserving early explanations, reports from the Companions and Successors, Arabic usage, and reasoned comparison between interpretations.</p><a href="https://quran.com/tafsirs" target="_blank" rel="noreferrer">Explore tafsir sources ↗</a></div></article>
+            <article class="scholar-card"><div class="scholar-monogram">IK</div><div><span>QUR’AN & HADITH</span><h3>Ibn Kathir</h3><p>Frequently explains verses through other verses, authentic hadith, and reports from the earliest Muslim generations.</p><a href="https://quran.com/1:1/tafsirs/en-tafisr-ibn-kathir" target="_blank" rel="noreferrer">Read Ibn Kathir on Al-Fatihah ↗</a></div></article>
+            <article class="scholar-card"><div class="scholar-monogram">S</div><div><span>CLEAR THEMATIC EXPLANATION</span><h3>Al-Sa‘di</h3><p>Valued for accessible explanations, clear themes, spiritual lessons, and practical meanings expressed in a concise style.</p><a href="https://quran.com/tafsirs" target="_blank" rel="noreferrer">Browse available commentaries ↗</a></div></article>
+          </div>
+          <div class="method-box"><h3>Read tafsir with context</h3><p>Translations and short summaries cannot capture every shade of meaning. Scholars examine Arabic language, surrounding verses, occasions of revelation, sound hadith, and the understanding of the earliest generations. Differences may reflect complementary meanings or genuine scholarly disagreement.</p></div>
+        </div>
+        <p class="study-disclaimer">Educational summaries only · Quotations link to their sources · Verify religious rulings with qualified scholarship</p>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="searchDialog" class="search-dialog">
+    <form method="dialog" class="dialog-head"><div><strong>Search the Qur’an</strong><small>Search English translations</small></div><button aria-label="Close">×</button></form>
+    <form id="globalSearchForm" class="global-search"><input id="globalSearch" minlength="2" required placeholder="Try “mercy”, “patience”, “light”…"><button>Search</button></form>
+    <div id="searchResults" class="search-results"><p>Enter a word or phrase to begin.</p></div>
+  </dialog>
+  <dialog id="tafsirDialog" class="search-dialog tafsir-dialog">
+    <form method="dialog" class="dialog-head"><div><strong id="tafsirTitle">Meaning & Tafsir</strong><small>Translation and scholarly commentary</small></div><button aria-label="Close">×</button></form>
+    <div class="tafsir-body"><div class="meaning-label">THE VERSE</div><p id="tafsirArabic" class="tafsir-arabic"></p><p id="tafsirTranslation" class="tafsir-translation"></p><div class="chain-heading"><span>VERSE-SPECIFIC COMMENTARY</span><h3>Explanations focused on this ayah</h3><p>The relevant paragraph is selected from an exact-ayah tafsir record. Multi-verse records and unrelated introductory paragraphs are excluded.</p></div><div id="commentaryChain" class="commentary-chain"><div class="loading-card">Gathering commentary…</div></div><div class="tafsir-links"><a id="ibnKathirLink" target="_blank" rel="noreferrer">Verify Ibn Kathir source ↗</a><a id="allTafsirLink" target="_blank" rel="noreferrer">Compare more tafsir ↗</a></div><div class="note-box"><strong>Source policy</strong><p>Every record must match the selected surah, ayah number, and Arabic text. Within that record, the displayed excerpt must also match the important words and concepts in the selected verse. If no relevant paragraph is found, the card is omitted.</p></div></div>
+  </dialog>
+
+  <aside id="settingsPanel" class="settings-panel">
+    <div class="settings-head"><strong>Reading settings</strong><button id="closeSettings">×</button></div>
+    <label>Arabic size <input id="arabicSize" type="range" min="28" max="56" value="38"></label>
+    <label>Translation <select id="translation"><option value="en.sahih">Saheeh International</option><option value="en.asad">Muhammad Asad</option><option value="en.pickthall">Pickthall</option></select></label>
+    <label class="switch-row">Show translation <input id="showTranslation" type="checkbox" checked></label>
+    <label>Commentator profiles <select id="profileStyle"><option value="portraits">Historical photos when available</option><option value="calligraphy">Arabic calligraphy only</option></select><small class="setting-note">Prophets and people without authentic portraits remain illuminated.</small></label>
+    <label>Commentary language <select id="commentaryLanguage"><option value="en">English</option><option value="ar">العربية</option></select><small class="setting-note">Arabic shows Arabic tafsir; English shows available English commentary and translations.</small></label>
+    <label>Commentary style <select id="tafsirMode"><option value="direct">Direct meaning</option><option value="classical">Classical sources</option></select><small class="setting-note">Classical sources include Hadith and early reports; direct meaning prioritizes concise explanation.</small></label>
+  </aside>
+
+  <div id="toast" class="toast" role="status"></div>
+  <audio id="audio"></audio>
+  <script src="app.js"></script>
+</body>
+</html>
+
