@@ -2,4 +2,6 @@
 .mizan-source { display: none; }
 :root[data-shia-commentators="true"] .mizan-source { display: inline-flex; }
 .settings-panel .switch-row + .switch-row { padding-top: 0; border-top: 0; }
+.show-shia-source { justify-self: start; padding: 8px 11px; color: var(--green); background: transparent; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; font: 700 11px "DM Sans", sans-serif; }
+.shia-source-frame { width: 100%; min-height: 420px; margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
 
