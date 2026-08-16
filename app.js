@@ -1,0 +1,125 @@
+const API='https://api.alquran.cloud/v1';
+const $=s=>document.querySelector(s);
+const state={surahs:[],current:1,translation:localStorage.translation||'en.sahih',audio:[],audioIndex:0,bookmarks:JSON.parse(localStorage.bookmarks||'[]'),ayahs:[],hadiths:[],hadithPage:1,hadithQuery:''};
+const els={list:$('#surahList'),verses:$('#verses'),audio:$('#audio')};
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function saveBookmarks(){localStorage.bookmarks=JSON.stringify(state.bookmarks)}
+function isSaved(key){return state.bookmarks.includes(key)}
+
+async function init(){
+  document.documentElement.dataset.theme=localStorage.theme||'light';
+  document.documentElement.dataset.profiles=localStorage.profileStyle||'portraits';
+  $('#translation').value=state.translation;
+  $('#profileStyle').value=localStorage.profileStyle||'portraits';
+  $('#commentaryLanguage').value=localStorage.commentaryLanguage||'en';
+  $('#tafsirMode').value=localStorage.tafsirMode||'direct';
+  bindEvents();
+  try{const r=await fetch(`${API}/surah`);const j=await r.json();state.surahs=j.data;renderSurahList();await loadSurah(Number(location.hash.slice(1))||1)}
+  catch(e){els.list.innerHTML='<div class="error-card">Could not reach the Qur’an service.</div>';els.verses.innerHTML='<div class="error-card">Please check your internet connection and refresh.</div>'}
+}
+
+function renderSurahList(filter=''){
+  const q=filter.toLowerCase().trim();
+  els.list.innerHTML=state.surahs.filter(s=>`${s.number} ${s.englishName} ${s.englishNameTranslation} ${s.name}`.toLowerCase().includes(q)).map(s=>`
+    <button class="surah-link ${s.number===state.current?'active':''}" data-surah="${s.number}">
+      <span class="surah-index">${String(s.number).padStart(2,'0')}</span><span class="surah-name"><strong>${s.englishName}</strong><small>${s.englishNameTranslation}</small></span><span class="surah-ar">${s.name.replace('سُورَةُ ','')}</span>
+    </button>`).join('')||'<div class="loading-small">No surah found.</div>';
+  els.list.querySelectorAll('[data-surah]').forEach(b=>b.onclick=()=>loadSurah(+b.dataset.surah));
+}
+
+async function loadSurah(number,scroll=true){
+  state.current=Math.max(1,Math.min(114,number)); location.hash=state.current; renderSurahList($('#surahSearch').value);
+  els.verses.innerHTML='<div class="loading-card">Loading verses…</div>';
+  try{
+    const editions=`quran-uthmani,${state.translation},ar.alafasy`;
+    const j=await (await fetch(`${API}/surah/${state.current}/editions/${editions}`)).json();
+    const [arabic,translation,audio]=j.data; state.audio=audio.ayahs; state.audioIndex=0; state.ayahs=arabic.ayahs.map((a,i)=>({arabic:a,translation:translation.ayahs[i]}));
+    updateHeader(arabic);
+    els.verses.innerHTML=arabic.ayahs.map((a,i)=>verseTemplate(a,translation.ayahs[i],i)).join('');
+    bindVerseActions(); if(scroll) window.scrollTo({top:0,behavior:'smooth'}); $('#sidebar').classList.remove('open');
+  }catch(e){els.verses.innerHTML='<div class="error-card">This chapter could not be loaded. Please try again.</div>'}
+}
+
+function updateHeader(s){
+  $('#topSurah').textContent=s.englishName; $('#topMeta').textContent=`${s.englishNameTranslation.toUpperCase()} · ${s.numberOfAyahs} VERSES`;
+  $('#surahNumber').textContent=String(s.number).padStart(2,'0'); $('#revelation').textContent=`${s.revelationType.toUpperCase()} SURAH`;
+  $('#surahArabic').textContent=s.name; $('#surahEnglish').innerHTML=`${s.englishName} <span>· ${s.englishNameTranslation}</span>`; $('#surahSummary').textContent=`${s.numberOfAyahs} verses · Chapter ${s.number} of 114`;
+  $('#bismillah').hidden=s.number===9;
+  const chapterKey=`s${s.number}`; const b=$('#bookmarkChapter'); b.innerHTML=`${isSaved(chapterKey)?'♥':'♡'} <span>${isSaved(chapterKey)?'Bookmarked':'Bookmark'}</span>`;
+}
+
+function verseTemplate(a,t,i){const key=`${state.current}:${a.numberInSurah}`;return `<article class="verse" id="ayah-${a.numberInSurah}"><p class="verse-arabic">${a.text}</p><p class="verse-translation">${t.text}</p><button class="tafsir-trigger" data-tafsir="${i}">Meaning & tafsir →</button><div class="verse-actions"><span class="ayah-num">${a.numberInSurah}</span><button data-play="${i}" aria-label="Play verse">▷</button><button data-save="${key}" class="${isSaved(key)?'saved':''}" aria-label="Bookmark verse">${isSaved(key)?'♥':'♡'}</button></div></article>`}
+function bindVerseActions(){
+  document.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>playFrom(+b.dataset.play));
+  document.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{const k=b.dataset.save,i=state.bookmarks.indexOf(k);i<0?state.bookmarks.push(k):state.bookmarks.splice(i,1);saveBookmarks();b.classList.toggle('saved');b.textContent=i<0?'♥':'♡';toast(i<0?'Verse bookmarked':'Bookmark removed')});
+  document.querySelectorAll('[data-tafsir]').forEach(b=>b.onclick=()=>openTafsir(+b.dataset.tafsir));
+}
+async function openTafsir(i){const row=state.ayahs[i],key=`${state.current}:${row.arabic.numberInSurah}`;$('#tafsirTitle').textContent=`${state.surahs[state.current-1].englishName} ${key}`;$('#tafsirArabic').textContent=row.arabic.text;$('#tafsirTranslation').textContent=row.translation.text;$('#ibnKathirLink').href=`https://quran.com/${key}/tafsirs/en-tafisr-ibn-kathir`;$('#allTafsirLink').href=`https://quran.com/${key}/tafsirs`;$('#commentaryChain').innerHTML='<div class="loading-card">Gathering commentary…</div>';$('#tafsirDialog').showModal();try{const [editionResult,kathirText]=await Promise.all([fetch(`${API}/ayah/${key}/editions/ar.muyassar,en.asad,en.pickthall`).then(r=>r.json()),fetchIbnKathir(key)]);const voices=editionResult.data||[],cards=[];const muy=voices.find(v=>v.edition.identifier==='ar.muyassar');if(muy)cards.push(chainCard('المُيَسَّر','Al-Muyassar','Contemporary concise tafsir','Arabic explanation',muy.text,'arabic'));const asad=voices.find(v=>v.edition.identifier==='en.asad');if(asad)cards.push(chainCard('أسد','Muhammad Asad','20th century','Explanatory translation',asad.text,'english','https://martinkramer.org/wp-content/uploads/2020/07/asad_portrait-e1593712185463.jpg'));const pick=voices.find(v=>v.edition.identifier==='en.pickthall');if(pick)cards.push(chainCard('بكثال','M. M. Pickthall','20th century','Translation perspective',pick.text,'english','https://upload.wikimedia.org/wikipedia/commons/7/71/Marmaduke_Pickthall_Portrait.jpg'));cards.unshift(chainCard('ابن كثير','Ibn Kathir','14th century','Classical tafsir',kathirText||'The full commentary service is temporarily unavailable. Use the source link below to read this passage.','english','',true));$('#commentaryChain').innerHTML=cards.join('')}catch{$('#commentaryChain').innerHTML='<div class="error-card">Commentary could not be loaded right now.</div>'}}
+async function fetchIbnKathir(key){const urls=[`https://api.qurancdn.com/api/v4/tafsirs/en-tafisr-ibn-kathir/by_ayah/${key}`,`https://api.quran.com/api/v4/tafsirs/169/by_ayah/${key}`];for(const url of urls){try{const r=await fetch(url);if(!r.ok)continue;const j=await r.json(),record=j.tafsir||j.tafsirs?.[0]||j;if(record.verse_key&&record.verse_key!==key)continue;const raw=record.text;if(raw)return conciseTafsir(stripHtml(raw))}catch{}}return''}
+function stripHtml(html){const doc=new DOMParser().parseFromString(html,'text/html');return doc.body.textContent||''}
+function conciseTafsir(text){const clean=text.replace(/\s+/g,' ').trim(),sentences=clean.match(/[^.!?]+[.!?]+/g)||[clean];let out='';for(const sentence of sentences){if((out+sentence).length>1100)break;out+=sentence}return out.trim()||clean.slice(0,1100)}
+function chainCard(mark,name,period,type,text,lang='english',photo='',illuminated=false){const selected=localStorage.commentaryLanguage||'en',code=lang==='arabic'?'ar':'en',isKathir=name==='Ibn Kathir',verseRef=`${state.current}:${state.ayahs.findIndex(x=>x.arabic.text===$('#tafsirArabic').textContent)+1}`;if(isKathir){photo='assets/ibn-kathir-illustration.png';illuminated=false}const face=`${photo?`<img src="${photo}" alt="${isKathir?'Traditional illustration used for Ibn Kathir':`Historical photograph of ${name}`}" loading="lazy" referrerpolicy="no-referrer">`:''}<b>${mark}</b>`,long=String(text).length>460;return `<article class="chain-card" data-language="${code}" ${code!==selected?'hidden':''}><div class="voice-avatar ${illuminated?'illuminated-profile':''}">${face}</div><div class="voice-meta"><span>${type.toUpperCase()} · VERSE ${verseRef}</span><h4>${name}</h4><small>${period}</small>${isKathir?'<i>Traditional illustration</i>':''}</div><p class="commentary-text ${long?'collapsed':''} ${lang==='arabic'?'voice-arabic':''}">${escapeHtml(text)}</p>${long?'<button class="see-full">See full commentary</button>':''}</article>`}
+function playFrom(i){state.audioIndex=i;els.audio.src=state.audio[i].audio;els.audio.play();toast(`Playing verse ${i+1}`)}
+els.audio.onended=()=>{if(++state.audioIndex<state.audio.length)playFrom(state.audioIndex);else $('#playAll').innerHTML='▶ <span>Play surah</span>'};
+
+function bindEvents(){
+  $('#studyBtn').onclick=()=>showStudy(); $('#backToQuran').onclick=()=>showReader();
+  $('#hadithModeBtn').onclick=()=>showHadithMode();
+  document.querySelectorAll('.study-tab').forEach(tab=>tab.onclick=()=>{document.querySelectorAll('.study-tab,.study-panel').forEach(x=>x.classList.remove('active'));tab.classList.add('active');$(`#panel-${tab.dataset.tab}`).classList.add('active')});
+  document.querySelectorAll('[data-filter]').forEach(input=>input.oninput=()=>{const q=input.value.toLowerCase();document.querySelectorAll(`#${input.dataset.filter}>article`).forEach(card=>card.hidden=!card.textContent.toLowerCase().includes(q))});
+  $('#surahSearch').oninput=e=>{if(document.documentElement.dataset.mode==='hadith'){const q=e.target.value.toLowerCase();document.querySelectorAll('.hadith-book').forEach(x=>x.hidden=!x.textContent.toLowerCase().includes(q))}else renderSurahList(e.target.value)}; $('#menuBtn').onclick=()=>$('#sidebar').classList.add('open'); $('#closeSidebar').onclick=()=>$('#sidebar').classList.remove('open');
+  $('#themeBtn').onclick=()=>{const n=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=n;localStorage.theme=n};
+  $('#settingsBtn').onclick=()=>$('#settingsPanel').classList.add('open'); $('#closeSettings').onclick=()=>$('#settingsPanel').classList.remove('open');
+  $('#arabicSize').oninput=e=>document.documentElement.style.setProperty('--arabic-size',`${e.target.value}px`);
+  $('#showTranslation').onchange=e=>document.body.classList.toggle('hide-translation',!e.target.checked);
+  $('#profileStyle').onchange=e=>{document.documentElement.dataset.profiles=e.target.value;localStorage.profileStyle=e.target.value;toast(e.target.value==='portraits'?'Historical profiles enabled':'Calligraphy profiles enabled')};
+  $('#commentaryLanguage').onchange=e=>{localStorage.commentaryLanguage=e.target.value;toast(e.target.value==='ar'?'Arabic commentary selected':'English commentary selected')};
+  $('#tafsirMode').onchange=e=>{localStorage.tafsirMode=e.target.value;toast(e.target.value==='direct'?'Direct explanations selected':'Classical sources selected')};
+  $('#translation').onchange=e=>{state.translation=e.target.value;localStorage.translation=state.translation;loadSurah(state.current,false)};
+  $('#prevSurah').onclick=()=>loadSurah(state.current-1); $('#nextSurah').onclick=()=>loadSurah(state.current+1); $('#playAll').onclick=()=>playFrom(0);
+  $('#bookmarkChapter').onclick=()=>{const k=`s${state.current}`,i=state.bookmarks.indexOf(k);i<0?state.bookmarks.push(k):state.bookmarks.splice(i,1);saveBookmarks();loadSurah(state.current,false);toast(i<0?'Surah bookmarked':'Bookmark removed')};
+  $('#globalSearchBtn').onclick=()=>$('#searchDialog').showModal();
+  $('#commentaryChain').onclick=e=>{const b=e.target.closest('.see-full');if(!b)return;const p=b.previousElementSibling,opening=p.classList.contains('collapsed');p.classList.toggle('collapsed',!opening);p.classList.toggle('expanded',opening);b.textContent=opening?'Show less':'See full commentary'};
+  new MutationObserver(()=>{const c=$('#commentaryChain'),loading=c.querySelector('.loading-card');if(loading?.textContent.includes('Gathering'))c.dataset.augmented='';else augmentCommentaryChain()}).observe($('#commentaryChain'),{childList:true});
+  $('#loadHadiths').onclick=loadHadithCollection; $('#hadithPrev').onclick=()=>{if(state.hadithPage>1){state.hadithPage--;renderHadithLibrary()}}; $('#hadithNext').onclick=()=>{const pages=Math.ceil(filteredHadiths().length/20);if(state.hadithPage<pages){state.hadithPage++;renderHadithLibrary()}};
+  $('#globalSearchForm').onsubmit=async e=>{e.preventDefault();const q=$('#globalSearch').value.trim(),out=$('#searchResults');out.innerHTML='<p>Searching…</p>';try{const j=await(await fetch(`${API}/search/${encodeURIComponent(q)}/all/${state.translation}`)).json();const rows=j.data.matches||[];out.innerHTML=rows.slice(0,50).map(x=>`<div class="search-result" data-go="${x.surah.number}:${x.numberInSurah}"><strong>${x.surah.englishName} · ${x.numberInSurah}</strong><p>${x.text}</p></div>`).join('')||'<p>No results found.</p>';out.querySelectorAll('[data-go]').forEach(r=>r.onclick=async()=>{const [s,a]=r.dataset.go.split(':').map(Number);$('#searchDialog').close();await loadSurah(s);setTimeout(()=>document.querySelector(`#ayah-${a}`)?.scrollIntoView({behavior:'smooth',block:'center'}),200)})}catch{out.innerHTML='<p>Search is unavailable right now.</p>'}};
+}
+async function loadHadithCollection(){const edition=$('#hadithCollection').value,out=$('#hadithLibrary');out.innerHTML='<div class="loading-card">Loading the complete collection…</div>';$('#loadHadiths').disabled=true;try{const url=`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/${edition}.min.json`;const j=await(await fetch(url)).json();state.hadiths=Array.isArray(j.hadiths)?j.hadiths:(Array.isArray(j)?j:[]);state.hadithPage=1;state.hadithQuery='';renderHadithLibrary()}catch(e){out.innerHTML='<div class="error-card">The collection could not be loaded. Check your connection and try again.</div>'}finally{$('#loadHadiths').disabled=false}}
+function filteredHadiths(){const q=state.hadithQuery.toLowerCase();return q?state.hadiths.filter(h=>`${h.hadithnumber||''} ${h.text||''} ${(h.grades||[]).map(g=>g.grade).join(' ')}`.toLowerCase().includes(q)):state.hadiths}
+function renderHadithLibrary(){const out=$('#hadithLibrary'),rows=filteredHadiths(),pages=Math.max(1,Math.ceil(rows.length/20)),start=(state.hadithPage-1)*20;out.innerHTML=`<div class="hadith-library-top"><strong>${rows.length.toLocaleString()} narrations</strong><input id="hadithSearch" placeholder="Search this collection…" value="${escapeHtml(state.hadithQuery)}"></div>${rows.slice(start,start+20).map(h=>`<article class="library-hadith"><div><span>HADITH ${h.hadithnumber??'—'}</span>${(h.grades||[]).slice(0,2).map(g=>`<em>${escapeHtml(g.grade||'')}</em>`).join('')}</div><p>${escapeHtml(h.text||'Text unavailable')}</p></article>`).join('')||'<p>No narrations match your search.</p>'}`;$('#hadithPager').hidden=!state.hadiths.length;$('#hadithPage').textContent=`Page ${state.hadithPage} of ${pages}`;$('#hadithSearch').oninput=e=>{state.hadithQuery=e.target.value;state.hadithPage=1;renderHadithLibrary()}}
+function escapeHtml(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function showStudy(){document.documentElement.dataset.mode='study';$('#readerView').hidden=true;$('#studyView').hidden=false;$('#topSurah').textContent='Study';$('#topMeta').textContent='HADITH · SUNNAH · TAFSIR';window.scrollTo({top:0,behavior:'smooth'})}
+function showHadithMode(){showStudy();document.documentElement.dataset.mode='hadith';document.querySelectorAll('.study-tab,.study-panel').forEach(x=>x.classList.remove('active'));document.querySelector('[data-tab="hadith"]').classList.add('active');$('#panel-hadith').classList.add('active');$('#topSurah').textContent='Hadith Library';$('#topMeta').textContent='COMPLETE COLLECTIONS · LOCAL FILTERING';renderHadithSidebar();if(!state.hadiths.length)loadHadithCollection()}
+function showReader(){document.documentElement.dataset.mode='quran';$('#studyView').hidden=true;$('#readerView').hidden=false;$('#sideHeadingLabel').textContent='114 SURAHS';$('#surahSearch').placeholder='Find a surah…';renderSurahList($('#surahSearch').value);const s=state.surahs[state.current-1];if(s)updateHeader(s);window.scrollTo({top:0,behavior:'smooth'})}
+function renderHadithSidebar(){const books=[['eng-bukhari','Sahih al-Bukhari','الصحيح البخاري'],['eng-muslim','Sahih Muslim','صحيح مسلم'],['eng-abudawud','Sunan Abi Dawud','سنن أبي داود'],['eng-tirmidhi','Jami‘ at-Tirmidhi','جامع الترمذي'],['eng-nasai','Sunan an-Nasa’i','سنن النسائي'],['eng-ibnmajah','Sunan Ibn Majah','سنن ابن ماجه'],['eng-malik','Muwatta Malik','موطأ مالك']];$('#sideHeadingLabel').textContent='HADITH COLLECTIONS';$('#surahSearch').placeholder='Filter collections…';els.list.innerHTML=books.map((b,i)=>`<button class="surah-link hadith-book ${$('#hadithCollection').value===b[0]?'active':''}" data-book="${b[0]}"><span class="surah-index">${String(i+1).padStart(2,'0')}</span><span class="surah-name"><strong>${b[1]}</strong><small>Complete collection</small></span><span class="surah-ar">${b[2]}</span></button>`).join('');els.list.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>{$('#hadithCollection').value=b.dataset.book;loadHadithCollection();renderHadithSidebar()})}
+async function augmentCommentaryChain(){
+  const chain=$('#commentaryChain');
+  if(chain.dataset.augmented==='yes'||!chain.querySelector('.chain-card'))return;
+  chain.dataset.augmented='yes';
+  const key=($('#tafsirTitle').textContent.match(/\d+:\d+$/)||[])[0];
+  if(!key)return;
+  chain.innerHTML='<div class="loading-card">Checking which scholars commented on this ayah…</div>';
+  await discoverTafsirVoices(key,chain);
+  chain.querySelector('.loading-card')?.remove();
+  if(!chain.querySelector('.chain-card'))chain.innerHTML='<div class="error-card">No sourced commentary was found for this ayah in the selected language.</div>';
+}
+function propheticCommentary(key){return({'1:2':'In the hadith qudsi explaining Al-Fatihah, Allah responds that His servant has praised Him.','1:3':'The narration explains this declaration as the servant praising and glorifying Allah.','1:4':'The narration connects this verse with the servant’s recognition of Allah’s majesty and judgment.','1:5':'Allah describes this part as being between Him and His servant, with the servant’s request granted.','1:6':'The closing request belongs to the servant, and Allah promises the servant what was asked.','1:7':'This verse completes the servant’s request for guidance, which the narration says will be granted.'})[key]||''}
+async function discoverTafsirVoices(key,chain){
+  const selected=localStorage.commentaryLanguage||'en';
+  const mode=localStorage.tafsirMode||'direct';
+  const seen=new Set();
+  if(selected==='en'){
+    try{const [s,a]=key.split(':'),[verse,j]=await Promise.all([fetch(`https://quranapi.pages.dev/api/${s}/${a}.json`).then(r=>r.json()),fetch(`https://quranapi.pages.dev/api/tafsir/${s}_${a}.json`).then(r=>r.json())]);if(Number(j.surahNo)!==Number(s)||Number(j.ayahNo)!==Number(a))throw new Error('Verse mismatch');const sourceArabic=normalizeArabic(verse.arabic1||verse.arabic2||''),selectedArabic=normalizeArabic($('#tafsirArabic').textContent),probe=sourceArabic.slice(0,12);if(!sourceArabic||!selectedArabic||(!selectedArabic.includes(probe)&&!sourceArabic.includes(selectedArabic.slice(0,12))))throw new Error('Text mismatch');for(const item of j.tafsirs||[]){if(!item.content||item.groupVerse)continue;if(mode==='direct'&&item.author==='Ibn Kathir')continue;const name=item.author,content=extractRelevantSection(item.content,$('#tafsirTranslation').textContent);if(!content)continue;const signature=`${name}|${content.slice(0,180)}`;if(seen.has(signature))continue;seen.add(signature);const mark=name==='Ibn Kathir'?'ابن كثير':initials(name),photo=photoForTafsir(name),type=name==='Ibn Kathir'?'Classical tafsir · focused excerpt':'Verse-focused tafsir excerpt';chain.insertAdjacentHTML('beforeend',chainCard(mark,name,`Matched to the wording of ${key}`,type,content,'english',photo,!photo))}}catch{}
+  }
+  try{if(!state.tafsirEditions){const j=await(await fetch(`${API}/edition/type/tafsir`)).json();state.tafsirEditions=(j.data||[]).filter(e=>e.type==='tafsir')}let candidates=state.tafsirEditions.filter(e=>e.language===selected);if(mode==='direct')candidates=candidates.filter(e=>/muyassar|saadi|mukhtasar|الميسر|السعدي|المختصر/i.test(`${e.identifier} ${e.name} ${e.englishName}`));const results=await Promise.allSettled(candidates.slice(0,24).map(async edition=>{const j=await(await fetch(`${API}/ayah/${key}/${edition.identifier}`)).json();return{edition,data:j.data}}));for(const result of results){if(result.status!=='fulfilled')continue;const {edition,data}=result.value;if(!data?.text||data.edition?.type!=='tafsir'||`${data.surah.number}:${data.numberInSurah}`!==key)continue;const name=edition.englishName||edition.name||edition.identifier,text=data.text,signature=`${name}|${text.slice(0,180)}`;if(seen.has(signature))continue;seen.add(signature);const mark=edition.language==='ar'?(edition.name||'تفسير').replace(/تفسير|القرآن/g,'').trim().slice(0,12):initials(name);chain.insertAdjacentHTML('beforeend',chainCard(mark||'تفسير',name,`Exact ayah record · ${key}`,mode==='direct'?'Direct tafsir':'Classical tafsir',text,edition.language==='ar'?'arabic':'english','',true))}}catch{}
+}
+function stripMarkdown(text){return text.replace(/^#{1,6}\s+/gm,'').replace(/\*\*(.*?)\*\*/g,'$1').replace(/\[(.*?)\]\(.*?\)/g,'$1').replace(/\s+/g,' ').trim()}
+function extractRelevantSection(markdown,translation){const stop=new Set('the and that this with from they them their there which what when where who whom into upon have has had were was are for not but you your all our his her its will would should could verse quran allah those'.split(' ')),synonyms={path:['way','road'],way:['path'],bestowed:['bless','favor'],favor:['grace','bless'],anger:['wrath'],astray:['misguid','lost'],guidance:['guide','direct'],merciful:['mercy'],praise:['thank','glor']},words=stripMarkdown(translation).toLowerCase().replace(/[^a-z\s-]/g,' ').split(/\s+/).filter(w=>w.length>3&&!stop.has(w)),keywords=[...new Set(words.flatMap(w=>[w,...(synonyms[w]||[])]).map(w=>w.slice(0,6)))],parts=String(markdown).split(/\n\s*\n+/).map(stripMarkdown).filter(p=>p.length>45);if(!parts.length||!keywords.length)return'';const scored=parts.map((p,i)=>({p,i,score:keywords.reduce((n,k)=>n+(p.toLowerCase().includes(k)?1:0),0)})).sort((a,b)=>b.score-a.score);if(!scored[0]?.score)return'';const best=scored[0],next=parts[best.i+1]||'',nextScore=keywords.reduce((n,k)=>n+(next.toLowerCase().includes(k)?1:0),0);return `${best.p}${nextScore?` ${next}`:''}`.slice(0,1800)}
+function normalizeArabic(text){return String(text).normalize('NFKD').replace(/[\u064B-\u065F\u0670\u06D6-\u06EDـ\s۞﴿﴾]/g,'').replace(/[إأآٱ]/g,'ا').replace(/ى/g,'ي')}
+function groupContainsKey(label,key){const target=key.split(':').map(Number),m=String(label).match(/(\d+):(\d+)\s+to\s+(\d+):(\d+)/i);if(!m)return false;const [,s1,a1,s2,a2]=m.map(Number);return target[0]===s1&&target[0]===s2&&target[1]>=a1&&target[1]<=a2}
+function initials(name){return name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()}
+function photoForTafsir(name){const photos={'Ibn Kathir':'assets/ibn-kathir-illustration.png','Tazkirul Quran':'https://cpsglobal.org/sites/default/files/inline-images/Maulana%20Wahiduddin%20Khan_0.jpeg','Maarif Ul Quran':'https://www.urdunews.com/sites/default/files/styles/720x461/public/2022/11/18/1625161-2073343320.jpg?itok=EJ1ymHBA'};return photos[name]||''}
+window.addEventListener('hashchange',()=>{const n=Number(location.hash.slice(1));if(n&&n!==state.current)loadSurah(n)});
+init();
+
