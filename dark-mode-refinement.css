@@ -1,0 +1,81 @@
+/* Dark mode uses its own surfaces and borders instead of inheriting light-paper colors. */
+:root[data-theme="dark"] {
+  --bg: #0e1511;
+  --paper: #151f19;
+  --ink: #e7efe9;
+  --muted: #9aa99f;
+  --line: #26362c;
+  --green: #78bd94;
+  --green2: #78bd94;
+  --gold: #d1ab60;
+  --shadow: 0 12px 32px rgba(0,0,0,.25);
+}
+
+[data-theme="dark"] body { background: #0e1511; }
+[data-theme="dark"] .sidebar { background: #101914; border-color: #223027; }
+[data-theme="dark"] .brand { border-color: #223027; }
+[data-theme="dark"] .brand-mark { color: #8ac7a1; background: #1b2b22; }
+[data-theme="dark"] .brand strong { color: #edf5ef; }
+[data-theme="dark"] .search-box { color: #9cacA1; background: #19241e; border-color: transparent; }
+[data-theme="dark"] .search-box:focus-within { border-color: #406350; }
+[data-theme="dark"] .search-box input { color: #edf5ef; }
+[data-theme="dark"] .search-box input::placeholder { color: #819187; }
+[data-theme="dark"] .side-heading, [data-theme="dark"] .sidebar-foot { color: #84948a; border-color: #223027; }
+[data-theme="dark"] .surah-link { color: #cbd8cf; }
+[data-theme="dark"] .surah-link:hover { color: #eef6f0; background: #17231c; }
+[data-theme="dark"] .surah-link.active { color: #e9f6ed; background: #1e382b; }
+[data-theme="dark"] .surah-index { color: #8da197; border-color: #304238; background: transparent; }
+[data-theme="dark"] .surah-link.active .surah-index { color: #102218; background: #88c9a1; border-color: #88c9a1; }
+[data-theme="dark"] .surah-link .surah-arabic, [data-theme="dark"] .surah-link.active .surah-arabic { color: #a6bcaf; }
+
+[data-theme="dark"] .topbar { background: rgba(17,25,20,.92); border-color: #223027; }
+[data-theme="dark"] .quran-emblem { color: #8bc9a2; }
+[data-theme="dark"] .quran-emblem:hover, [data-theme="dark"] .icon-btn:hover { background: #1d2e24; }
+[data-theme="dark"] .top-title { border-color: #2a3a30; }
+[data-theme="dark"] .top-title span { color: #e8f0ea; }
+[data-theme="dark"] .top-title small { color: #8b9c92; }
+[data-theme="dark"] .icon-btn { color: #a5b7ab; }
+[data-theme="dark"] .study-btn { color: #9bd2ae; border-color: #365744; background: transparent; }
+[data-theme="dark"] .study-btn:hover { color: #0e1511; background: #86c99f; border-color: #86c99f; }
+[data-theme="dark"] .secondary-study-btn { color: #dfbd7d; border-color: #5b4930; }
+[data-theme="dark"] .secondary-study-btn:hover { color: #fff; background: #8c6536; border-color: #8c6536; }
+
+[data-theme="dark"] .reader-head, [data-theme="dark"] .study-hero { border-color: #26362c; }
+[data-theme="dark"] .reader-head h1, [data-theme="dark"] .bismillah, [data-theme="dark"] .tafsir-arabic { color: #8bc9a2; }
+[data-theme="dark"] .reader-head h2 { color: #e5eee7; }
+[data-theme="dark"] .reader-head h2 span, [data-theme="dark"] .reader-head #surahSummary { color: #9baaa1; }
+[data-theme="dark"] .ghost-btn { color: #9bd1ad; border-color: #365744; }
+[data-theme="dark"] .verse { border-color: #24342b; }
+[data-theme="dark"] .verse:hover { background: #121e18; }
+[data-theme="dark"] .verse-arabic { color: #e2eee5; }
+[data-theme="dark"] .verse-translation { color: #b2c0b6; }
+[data-theme="dark"] .tafsir-trigger { color: #91cba8; }
+[data-theme="dark"] .verse-actions .ayah-num { color: #dfbd7d; background: #18241d; border-color: #4a402b; }
+[data-theme="dark"] .verse-actions button { color: #96aa9c; }
+[data-theme="dark"] .chapter-nav button { color: #98d0ad; background: transparent; border-color: #365744; }
+[data-theme="dark"] .chapter-nav button:hover { color: #0e1511; background: #86c99f; }
+
+[data-theme="dark"] .study-hero h1 { color: #8bc9a2; }
+[data-theme="dark"] .study-hero .eyebrow, [data-theme="dark"] .study-hero p, [data-theme="dark"] .study-tab { color: #9dada3; }
+[data-theme="dark"] .study-tab.active, [data-theme="dark"] .library-controls button, [data-theme="dark"] #loadHadiths { color: #0f1812; background: #86c99f; }
+[data-theme="dark"] .panel-intro, [data-theme="dark"] .library-head { border-color: #26362c; }
+[data-theme="dark"] .study-card, [data-theme="dark"] .scholar-card, [data-theme="dark"] .library-hadith, [data-theme="dark"] .practice-item, [data-theme="dark"] .method-box, [data-theme="dark"] .note-box, [data-theme="dark"] .chain-card { background: #151f19; border-color: #29392f; }
+[data-theme="dark"] .study-card:hover, [data-theme="dark"] .scholar-card:hover { border-color: #3b5847; }
+[data-theme="dark"] .scholar-monogram, [data-theme="dark"] .chain-card .voice-profile { color: #91cda8; background: #1c2b22; }
+[data-theme="dark"] .card-tag { color: #e1bf7d; background: #33291b; }
+
+[data-theme="dark"] .tafsir-dialog, [data-theme="dark"] .tafsir-dialog .dialog-head, [data-theme="dark"] .settings-panel { background: #121c16; }
+[data-theme="dark"] .tafsir-dialog .dialog-head { border-color: #29392f; }
+[data-theme="dark"] .tafsir-dialog .dialog-head strong, [data-theme="dark"] .settings-head { color: #e7efe9; }
+[data-theme="dark"] .tafsir-translation { border-color: #a8894b; }
+[data-theme="dark"] .settings-panel label { border-color: #29392f; }
+[data-theme="dark"] select, [data-theme="dark"] input { color-scheme: dark; }
+
+/* In Hadith mode, remain dark but switch the accent—never back to white. */
+:root[data-theme="dark"][data-mode="hadith"] { --green: #d29b72; --green2: #d29b72; --gold: #e0b275; --bg: #17120f; --paper: #201814; --ink: #f1e9e3; --muted: #b4a49a; --line: #3b2e26; }
+[data-theme="dark"][data-mode="hadith"] .sidebar { background: #17110e; border-color: #33261f; }
+[data-theme="dark"][data-mode="hadith"] .topbar { background: rgba(24,18,15,.92); border-color: #33261f; }
+[data-theme="dark"][data-mode="hadith"] .search-box { background: #241b16; }
+[data-theme="dark"][data-mode="hadith"] .surah-link:hover { background: #261b16; }
+[data-theme="dark"][data-mode="hadith"] .surah-link.active { background: #3a271e; }
+
