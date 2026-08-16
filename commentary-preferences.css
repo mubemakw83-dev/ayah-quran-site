@@ -1,0 +1,5 @@
+/* Source-family controls keep the reader compact while allowing both traditions. */
+.mizan-source { display: none; }
+:root[data-shia-commentators="true"] .mizan-source { display: inline-flex; }
+.settings-panel .switch-row + .switch-row { padding-top: 0; border-top: 0; }
+
