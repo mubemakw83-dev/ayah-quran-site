@@ -109,6 +109,7 @@ async function augmentCommentaryChain(){
   chain.dataset.augmented='yes';
   const key=($('#tafsirTitle').textContent.match(/\d+:\d+$/)||[])[0];
   if(!key)return;
+  const thaqalayn=$('#thaqalaynLink');thaqalayn.href=`https://thaqalayn.net/quran/${key.replace(':','/')}`;thaqalayn.hidden=localStorage.shiaCommentators!=='true';
   chain.innerHTML='<div class="loading-card">Checking which scholars commented on this ayah…</div>';
   await discoverTafsirVoices(key,chain);
   chain.querySelector('.loading-card')?.remove();
@@ -119,6 +120,7 @@ async function discoverTafsirVoices(key,chain){
   const selected=localStorage.commentaryLanguage||'en';
   const mode=localStorage.tafsirMode||'direct';
   const seen=new Set();
+  if(selected==='en'&&isCommentatorFamilyEnabled('shia')){try{const content=await fetchPooyaCommentary(key);if(content){seen.add(`Agha Ali Puya|${content.slice(0,180)}`);chain.insertAdjacentHTML('beforeend',chainCard('پویا','Agha Ali Puya','Thaqalayn · exact ayah source',"SHI’A TAFSIR · focused excerpt",content,'english','',true))}}catch{}}
   if(selected==='en'){
     try{const [s,a]=key.split(':'),[verse,j]=await Promise.all([fetch(`https://quranapi.pages.dev/api/${s}/${a}.json`).then(r=>r.json()),fetch(`https://quranapi.pages.dev/api/tafsir/${s}_${a}.json`).then(r=>r.json())]);if(Number(j.surahNo)!==Number(s)||Number(j.ayahNo)!==Number(a))throw new Error('Verse mismatch');const sourceArabic=normalizeArabic(verse.arabic1||verse.arabic2||''),selectedArabic=normalizeArabic($('#tafsirArabic').textContent),probe=sourceArabic.slice(0,12);if(!sourceArabic||!selectedArabic||(!selectedArabic.includes(probe)&&!sourceArabic.includes(selectedArabic.slice(0,12))))throw new Error('Text mismatch');for(const item of j.tafsirs||[]){if(!item.content||item.groupVerse)continue;if(mode==='direct'&&item.author==='Ibn Kathir')continue;const name=item.author,family=commentatorFamily(name);if(!family||!isCommentatorFamilyEnabled(family))continue;const content=extractRelevantSection(item.content,$('#tafsirTranslation').textContent);if(!content)continue;const signature=`${name}|${content.slice(0,180)}`;if(seen.has(signature))continue;seen.add(signature);const mark=name==='Ibn Kathir'?'ابن كثير':initials(name),photo=photoForTafsir(name),type=`${family==='shia'?'SHI’A':'SUNNI'} TAFSIR · focused excerpt`;chain.insertAdjacentHTML('beforeend',chainCard(mark,name,`Matched to the wording of ${key}`,type,content,'english',photo,!photo))}}catch{}
   }
@@ -129,6 +131,7 @@ function extractRelevantSection(markdown,translation){const stop=new Set('the an
 function normalizeArabic(text){return String(text).normalize('NFKD').replace(/[\u064B-\u065F\u0670\u06D6-\u06EDـ\s۞﴿﴾]/g,'').replace(/[إأآٱ]/g,'ا').replace(/ى/g,'ي')}
 function commentatorFamily(name){const value=String(name).toLowerCase();if(/mizan|tabataba|طباطبائي|pooya|poya|مجمع البيان|majma/.test(value))return'shia';if(/ibn kathir|kathir|muyassar|saadi|sa'di|السعدي|الميسر|maarif|tazkirul/.test(value))return'sunni';return''}
 function isCommentatorFamilyEnabled(family){return family==='sunni'?localStorage.sunniCommentators!=='false':localStorage.shiaCommentators==='true'}
+async function fetchPooyaCommentary(key){const source=`https://thaqalayn.net/quran/${key.replace(':','/')}`,urls=[source,`https://api.allorigins.win/raw?url=${encodeURIComponent(source)}`];let html='';for(const url of urls){try{const r=await fetch(url);if(r.ok){html=await r.text();break}}catch{}}if(!html)throw new Error('Source unavailable');const text=new DOMParser().parseFromString(html,'text/html').body.innerText.replace(/\r/g,'');const after=text.split('Agha Ali Puya Commentary')[1]||'',marker=`Commentary on Quran ${key}`,start=after.indexOf(marker);if(start<0)throw new Error('Exact commentary unavailable');const excerpt=after.slice(start+marker.length).replace(/\s+/g,' ').trim();return excerpt.slice(0,650)}
 function groupContainsKey(label,key){const target=key.split(':').map(Number),m=String(label).match(/(\d+):(\d+)\s+to\s+(\d+):(\d+)/i);if(!m)return false;const [,s1,a1,s2,a2]=m.map(Number);return target[0]===s1&&target[0]===s2&&target[1]>=a1&&target[1]<=a2}
 function initials(name){return name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()}
 function photoForTafsir(name){const photos={'Ibn Kathir':'assets/ibn-kathir-illustration.png','Tazkirul Quran':'https://cpsglobal.org/sites/default/files/inline-images/Maulana%20Wahiduddin%20Khan_0.jpeg','Maarif Ul Quran':'https://www.urdunews.com/sites/default/files/styles/720x461/public/2022/11/18/1625161-2073343320.jpg?itok=EJ1ymHBA'};return photos[name]||''}
