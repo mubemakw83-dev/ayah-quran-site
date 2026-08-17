@@ -3,5 +3,9 @@
 :root[data-shia-commentators="true"] .mizan-source { display: inline-flex; }
 .settings-panel .switch-row + .switch-row { padding-top: 0; border-top: 0; }
 .show-shia-source { justify-self: start; padding: 8px 11px; color: var(--green); background: transparent; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; font: 700 11px "DM Sans", sans-serif; }
+.tafsir-catalogue { display: grid; gap: 10px; margin: 22px 0; }
+.tafsir-catalogue details { border: 1px solid var(--line); border-radius: 10px; background: var(--paper); padding: 13px 15px; }
+.tafsir-catalogue summary { cursor: pointer; font-weight: 800; color: var(--ink); }
+.tafsir-catalogue p, .catalogue-source { margin: 11px 0 0; color: var(--muted); line-height: 1.65; }
 .shia-source-frame { width: 100%; min-height: 420px; margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
 
