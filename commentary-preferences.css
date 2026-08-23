@@ -11,5 +11,4 @@
 .catalogue-toolbar strong { color:var(--ink); font-size:15px; }
 .tafsir-work-card small { color:var(--muted); font-size:11px; }
 .empty-catalogue { color:var(--muted); }
-.shia-source-frame { width: 100%; min-height: 420px; margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
 
